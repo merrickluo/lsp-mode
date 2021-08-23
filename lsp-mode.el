@@ -995,6 +995,12 @@ calling `remove-overlays'.")
 
 (defvar-local lsp--virtual-buffer-point-max nil)
 
+(defvar-local lsp-workspace-settings nil
+  "Override part of the `lsp-client-settings'.
+useful for setting per-workspace client settings.")
+;;;###autoload
+(put 'lsp-workspace-settings 'safe-local-variable 'listp)
+
 (cl-defgeneric lsp-execute-command (server command arguments)
   "Ask SERVER to execute COMMAND with ARGUMENTS.")
 
@@ -7789,8 +7795,12 @@ TBL - a hash table, PATHS is the path to the nested VALUE."
                               symbol-value)))
                 (when (or boolean? value)
                   (lsp-ht-set ret (s-split "\\." path) value)))))
-          lsp-client-settings)
+          (lsp--client-settings))
     ret))
+
+(defun lsp--client-settings ()
+  (let ((-compare-fn #'lsp--compare-setting-path))
+    (-uniq (append lsp-workspace-settings lsp-client-settings))))
 
 (defun lsp--start-connection (session client project-root)
   "Initiates connection created from CLIENT for PROJECT-ROOT.
